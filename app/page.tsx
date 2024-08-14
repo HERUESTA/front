@@ -1,15 +1,55 @@
-import Image from "next/image";
-import TextInput from "./components/textInput/TextInput";
+"use client";
+
+import { useState, ChangeEvent } from "react";
+import axios from "../lib/axios"; // axios設定ファイルを正しいパスに配置
+
+type Video = {
+  id: string;
+  url: string;
+  title: string;
+};
 
 export default function Home() {
-  return (
-    <>
-      <div>
-        <TextInput placeholder="配信者ID" />
-        <TextInput placeholder="検索" />
+  const [streamerId, setStreamerId] = useState<string>("");
+  const [videos, setVideos] = useState<Video[]>([]);
 
-        <button className="btn btn-primary">検索</button>
-      </div>
-    </>
+  const fetchVideos = async () => {
+    try {
+      const response = await axios.get(`/twitch/${streamerId}`);
+      const videoData = response.data.data.map((video: any) => ({
+        id: video.id,
+        url: video.url,
+        title: video.title,
+      }));
+      setVideos(videoData);
+    } catch (error) {
+      console.error("Error fetching videos:", error);
+    }
+  };
+
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setStreamerId(e.target.value);
+  };
+
+  return (
+    <div>
+      <h1>Twitch Videos</h1>
+      <input
+        type="text"
+        value={streamerId}
+        onChange={handleInputChange}
+        placeholder="Enter Streamer ID"
+      />
+      <button onClick={fetchVideos}>Search</button>
+      <ul>
+        {videos.map((video) => (
+          <li key={video.id}>
+            <a href={video.url} target="_blank" rel="noopener noreferrer">
+              {video.title}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
