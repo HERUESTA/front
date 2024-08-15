@@ -18,7 +18,7 @@ export default function Home() {
   const fetchClips = async () => {
     try {
       const response = await axios.get(`/twitch/${streamerId}`);
-      const clipData = response.data.data.map((clip: any) => ({
+      const clipData = response.data.filter((clip: any) => clip.language === 'ja').map((clip: any) => ({
         id: clip.id,
         url: `https://clips.twitch.tv/${clip.id}`,
         title: clip.title,
