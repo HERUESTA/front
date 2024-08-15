@@ -9,6 +9,8 @@ type Video = {
   title: string;
 };
 
+const parentDomain = process.env.NEXT_PUBLIC_PARENT_DOMAIN;
+
 export default function Home() {
   const [streamerId, setStreamerId] = useState<string>("");
   const [videos, setVideos] = useState<Video[]>([]);
@@ -50,7 +52,7 @@ export default function Home() {
           <li key={video.id}>
             <h2>{video.title}</h2>
             <iframe
-              src={`https://player.twitch.tv/?video=${video.id}&parent=localhost&autoplay=false`} // autoplay=falseを追加
+              src={`https://player.twitch.tv/?video=${video.id}&parent=${parentDomain}&autoplay=false`}
               height="300"
               width="400"
               allowFullScreen={true}
