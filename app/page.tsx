@@ -18,7 +18,7 @@ export default function Home() {
       const response = await axios.get(`/twitch/${streamerId}`);
       const videoData = response.data.data.map((video: any) => ({
         id: video.id,
-        url: video.url,
+        url: `https://www.twitch.tv/videos/${video.id}`,
         title: video.title,
       }));
       setVideos(videoData);
@@ -48,9 +48,13 @@ export default function Home() {
       <ul>
         {videos.map((video) => (
           <li key={video.id}>
-            <a href={video.url} target="_blank" rel="noopener noreferrer">
-              {video.title}
-            </a>
+            <h2>{video.title}</h2>
+            <iframe
+              src={`https://player.twitch.tv/?video=${video.id}&parent=localhost&autoplay=false`} // autoplay=falseを追加
+              height="300"
+              width="400"
+              allowFullScreen={true}
+            ></iframe>
           </li>
         ))}
       </ul>
