@@ -18,12 +18,17 @@ export default function Home() {
   const fetchClips = async () => {
     try {
       const response = await axios.get(`/twitch/${streamerId}`);
-      const clipData = response.data.filter((clip: any) => clip.language === 'ja').map((clip: any) => ({
-        id: clip.id,
-        url: `https://clips.twitch.tv/${clip.id}`,
-        title: clip.title,
-      }));
-      setClips(clipData);
+      console.log("Fetched clips response:", response); // デバッグ用に追加
+      if (Array.isArray(response.data)) {
+        const clipData = response.data.map((clip: any) => ({
+          id: clip.id,
+          url: `https://clips.twitch.tv/${clip.id}`,
+          title: clip.title,
+        }));
+        setClips(clipData);
+      } else {
+        console.error("Unexpected data format:", response.data);
+      }
     } catch (error) {
       console.error("Error fetching clips:", error);
     }
