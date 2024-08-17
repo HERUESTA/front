@@ -8,6 +8,7 @@ import TextInput from "./components/molecules/textInput/TextInput";
 import { processVideoData } from "./components/utils/VideoUtils";
 import SearchButton from "./components/molecules/button/SearchButton";
 import VideoCard from "./components/organisms/VideoCard";
+import GestHeader from "./components/templates/header/GestHeader";
 
 export default function Home() {
   const parentDomain = process.env.NEXT_PUBLIC_PARENT_DOMAIN || "localhost";
@@ -30,9 +31,9 @@ export default function Home() {
   };
 
   return (
-    <div>
+    <body>
+      <GestHeader />
       <Text />
-      <h1>Twitch Videos</h1>
       <TextInput
         value={streamerId}
         onChange={handleInputChange}
@@ -49,6 +50,6 @@ export default function Home() {
           />
         ))}
       </div>
-    </div>
+    </body>
   );
 }
