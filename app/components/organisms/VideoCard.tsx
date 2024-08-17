@@ -12,7 +12,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ id, title, parentDomain }) => {
       <figure>
         <iframe
           className="card-actions justify-end"
-          src={`https://player.twitch.tv/?video=${id}&parent=${parentDomain}&autoplay=false`}
+          src={`https://clips.twitch.tv/embed?clip=${id}&parent=${parentDomain}&autoplay=false`}
           height="300"
           width="400"
           allowFullScreen={true}
