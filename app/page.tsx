@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, ChangeEvent, Children } from "react";
+import { useState, ChangeEvent } from "react";
 import axios from "../lib/axios";
 import { Video, TwitchResponse } from "./type/api/video";
 import Text from "./components/molecules/text/Text";
@@ -13,16 +13,36 @@ import GestHeader from "./components/templates/header/GestHeader";
 export default function Home() {
   const parentDomain = process.env.NEXT_PUBLIC_PARENT_DOMAIN || "localhost";
   const [streamerId, setStreamerId] = useState<string>("");
+  const [game_name, setGameName] = useState<string>("");
   const [videos, setVideos] = useState<Video[]>([]);
+  const [clips, setClips] = useState<Video[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const fetchVideos = async () => {
     try {
       const response = await axios.get(`/twitch/${streamerId}`);
-      console.log(parentDomain);
       const videoData = processVideoData(response.data);
       setVideos(videoData);
     } catch (error) {
+      setErrorMessage("ビデオが見つかりませんでした");
       console.error("ビデオが見つかりませんでした", error);
+      setVideos([]); // エラー時には空の配列を設定
+    }
+  };
+
+  const fetchClips = async () => {
+    try {
+      const response = await axios.get(`/twitch/clips`, {
+        params: { game_name: game_name },
+      });
+      const clipData = response.data.map((clip: any) => ({
+        id: clip.id,
+        url: `https://clips.twitch.tv/${clip.id}`,
+        title: clip.title,
+      }));
+      setClips(clipData);
+    } catch (error) {
+      console.error("クリップが見つかりませんでした", error);
     }
   };
 
@@ -30,10 +50,20 @@ export default function Home() {
     setStreamerId(e.target.value);
   };
 
+  const handleInputGameChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setGameName(e.target.value);
+  };
+
   return (
-    <body>
+    <div>
       <GestHeader />
       <Text />
+      <TextInput
+        value={game_name}
+        onChange={handleInputGameChange}
+        placeholder="ゲーム名を入力してください"
+      />
+      <SearchButton onClick={fetchClips} />
       <TextInput
         value={streamerId}
         onChange={handleInputChange}
@@ -49,7 +79,15 @@ export default function Home() {
             parentDomain={parentDomain}
           />
         ))}
+        {clips.map((clip) => (
+          <VideoCard
+            key={clip.id}
+            id={clip.id}
+            title={clip.title}
+            parentDomain={parentDomain}
+          />
+        ))}
       </div>
-    </body>
+    </div>
   );
 }
