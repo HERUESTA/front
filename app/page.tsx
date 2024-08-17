@@ -1,36 +1,26 @@
 "use client";
 
-import { useState, ChangeEvent } from "react";
-import axios from "../lib/axios"; // axios設定ファイルを正しいパスに配置
-
-type Clip = {
-  id: string;
-  url: string;
-  title: string;
-};
-
-const parentDomain = process.env.NEXT_PUBLIC_PARENT_DOMAIN || "localhost";
+import { useState, ChangeEvent, Children } from "react";
+import axios from "../lib/axios";
+import { Video, TwitchResponse } from "./type/api/video";
+import Text from "./components/molecules/text/Text";
+import TextInput from "./components/molecules/textInput/TextInput";
+import { processVideoData } from "./components/utils/VideoUtils";
+import SearchButton from "./components/molecules/button/SearchButton";
+import VideoCard from "./components/organisms/VideoCard";
 
 export default function Home() {
+  const parentDomain = process.env.NEXT_PUBLIC_PARENT_DOMAIN || "localhost";
   const [streamerId, setStreamerId] = useState<string>("");
-  const [clips, setClips] = useState<Clip[]>([]);
+  const [videos, setVideos] = useState<Video[]>([]);
 
-  const fetchClips = async () => {
+  const fetchVideos = async () => {
     try {
       const response = await axios.get(`/twitch/${streamerId}`);
-      console.log("Fetched clips response:", response); // デバッグ用に追加
-      if (Array.isArray(response.data)) {
-        const clipData = response.data.map((clip: any) => ({
-          id: clip.id,
-          url: `https://clips.twitch.tv/${clip.id}`,
-          title: clip.title,
-        }));
-        setClips(clipData);
-      } else {
-        console.error("Unexpected data format:", response.data);
-      }
+      const videoData = processVideoData(response.data);
+      setVideos(videoData);
     } catch (error) {
-      console.error("Error fetching clips:", error);
+      console.error("ビデオが見つかりませんでした", error);
     }
   };
 
@@ -40,31 +30,24 @@ export default function Home() {
 
   return (
     <div>
-      <p>
-        本サービスは、個人で運営する非公式サービスです。 Twitch
-        Interactive社とは関係ございませんのでご注意ください。
-      </p>
-      <h1>Twitch Clips</h1>
-      <input
-        type="text"
+      <Text />
+      <h1>Twitch Videos</h1>
+      <TextInput
         value={streamerId}
         onChange={handleInputChange}
-        placeholder="Enter Streamer ID"
+        placeholder="配信者IDを入力してください"
       />
-      <button onClick={fetchClips}>Search</button>
-      <ul>
-        {clips.map((clip) => (
-          <li key={clip.id}>
-            <h2>{clip.title}</h2>
-            <iframe
-              src={`https://clips.twitch.tv/embed?clip=${clip.id}&parent=${parentDomain}&autoplay=false`}
-              height="300"
-              width="400"
-              allowFullScreen={true}
-            ></iframe>
-          </li>
+      <SearchButton onClick={fetchVideos} />
+      <div className="flex flex-wrap">
+        {videos.map((video) => (
+          <VideoCard
+            key={video.id}
+            id={video.id}
+            title={video.title}
+            parentDomain={parentDomain}
+          />
         ))}
-      </ul>
+      </div>
     </div>
   );
 }
