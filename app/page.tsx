@@ -17,6 +17,7 @@ export default function Home() {
   const fetchVideos = async () => {
     try {
       const response = await axios.get(`/twitch/${streamerId}`);
+      console.log(parentDomain);
       const videoData = processVideoData(response.data);
       setVideos(videoData);
     } catch (error) {
