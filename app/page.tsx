@@ -12,7 +12,7 @@ import GestHeader from "./components/templates/header/GestHeader";
 
 const Login = () => {
   const handleLogin = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/twitch`;
+    window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/login`;
   };
 
   return <button onClick={handleLogin}>Login with Twitch</button>;
