@@ -10,6 +10,14 @@ import SearchButton from "./components/molecules/button/SearchButton";
 import VideoCard from "./components/organisms/VideoCard";
 import GestHeader from "./components/templates/header/GestHeader";
 
+const Login = () => {
+  const handleLogin = () => {
+    window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/twitch`;
+  };
+
+  return <button onClick={handleLogin}>Login with Twitch</button>;
+};
+
 export default function Home() {
   const parentDomain = process.env.NEXT_PUBLIC_PARENT_DOMAIN || "localhost";
   const [streamerId, setStreamerId] = useState<string>("");
@@ -57,6 +65,7 @@ export default function Home() {
   return (
     <div>
       <GestHeader />
+      <Login />
       <Text />
       <TextInput
         value={game_name}
