@@ -2,21 +2,14 @@
 
 import { useState, ChangeEvent } from "react";
 import axios from "../lib/axios";
-import { Video, TwitchResponse } from "./type/api/video";
+import { Video } from "./type/api/video";
 import Text from "./components/molecules/text/Text";
 import TextInput from "./components/molecules/textInput/TextInput";
 import { processVideoData } from "./components/utils/VideoUtils";
 import SearchButton from "./components/molecules/button/SearchButton";
 import VideoCard from "./components/organisms/VideoCard";
 import GestHeader from "./components/templates/header/GestHeader";
-
-const Login = () => {
-  const handleLogin = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/twitch`;
-  };
-
-  return <button onClick={handleLogin}>Login with Twitch</button>;
-};
+import LoginButton from "./components/LoginButton";
 
 export default function Home() {
   const parentDomain = process.env.NEXT_PUBLIC_PARENT_DOMAIN || "localhost";
@@ -65,7 +58,7 @@ export default function Home() {
   return (
     <div>
       <GestHeader />
-      <Login />
+      <LoginButton />
       <Text />
       <TextInput
         value={game_name}
