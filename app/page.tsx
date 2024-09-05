@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, ChangeEvent } from "react";
+import { useState, useEffect, ChangeEvent } from "react";
 import axios from "../lib/axios";
 import { Video } from "./type/api/video";
 import Text from "./components/molecules/text/Text";
@@ -11,13 +11,55 @@ import VideoCard from "./components/organisms/VideoCard";
 import GestHeader from "./components/templates/header/GestHeader";
 import LoginButton from "./components/LoginButton";
 
+interface Follow {
+  id: string | null;  // フォローIDがnullの場合を考慮
+  displayName: string;
+  profileImageUrl: string | null;  // プロフィール画像URLがnullの場合を考慮
+}
+
 export default function Home() {
   const parentDomain = process.env.NEXT_PUBLIC_PARENT_DOMAIN || "localhost";
   const [streamerId, setStreamerId] = useState<string>("");
   const [game_name, setGameName] = useState<string>("");
   const [videos, setVideos] = useState<Video[]>([]);
   const [clips, setClips] = useState<Video[]>([]);
+  const [follows, setFollows] = useState<Follow[]>([]); // フォローリストの状態を追加
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null); // プロフィール画像URLの状態を追加
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const response = await axios.get("/api/user_profile", {
+          withCredentials: true,
+        });
+        if (response.status === 401) {
+          window.location.href = "/users/sign_in";
+        } else {
+          setProfileImageUrl(response.data.profile_image_url);
+        }
+      } catch (error) {
+        console.error("ユーザー情報の取得に失敗しました", error);
+      }
+    };
+
+    const fetchFollows = async () => {
+      try {
+        const response = await axios.get("/api/follows", { withCredentials: true });
+        console.log("Fetched follows:", response.data); // デバッグ用ログ
+        if (Array.isArray(response.data)) {
+          setFollows(response.data);
+        } else {
+          setErrorMessage("フォローリストを取得できませんでした。");
+        }
+      } catch (error) {
+        console.error("フォローリストの取得に失敗しました", error);
+      }
+    };
+
+    fetchUserProfile();
+    fetchFollows(); // フォローリストを取得
+  }, []);
 
   const fetchVideos = async () => {
     try {
@@ -55,10 +97,32 @@ export default function Home() {
     setGameName(e.target.value);
   };
 
+  const handleLogout = async () => {
+    try {
+      await axios.delete("/logout", { withCredentials: true });
+      window.location.href = '/'; // ログアウト後にリダイレクト
+    } catch (error) {
+      console.error("ログアウトに失敗しました", error);
+    }
+  };
+
   return (
     <div>
       <GestHeader />
-      <LoginButton />
+      {profileImageUrl ? (
+        <div>
+          <img
+            src={profileImageUrl}
+            alt="Twitch Profile"
+            className="rounded-full w-16 h-16"
+          />
+          <button onClick={handleLogout} className="btn btn-logout">
+            Logout
+          </button>
+        </div>
+      ) : (
+        <LoginButton />
+      )}
       <Text />
       <TextInput
         value={game_name}
@@ -72,6 +136,28 @@ export default function Home() {
         placeholder="配信者IDを入力してください"
       />
       <SearchButton onClick={fetchVideos} />
+      
+      {/* フォローリストの表示 */}
+      <div>
+        <h2>フォローリスト</h2>
+        {follows.length > 0 ? (
+          <ul>
+            {follows.map((follow, index) => (
+              <li key={follow.id ?? index}>
+                <img
+                  src={follow.profileImageUrl ?? "/path/to/default-image.jpg"} 
+                  alt={follow.displayName}
+                  className="rounded-full w-8 h-8"
+                />
+                {follow.displayName}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>フォローしているユーザーが見つかりません。</p>
+        )}
+      </div>
+
       <div className="flex flex-wrap">
         {videos.map((video) => (
           <VideoCard
