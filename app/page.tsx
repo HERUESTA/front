@@ -34,6 +34,7 @@ export default function Home() {
           withCredentials: true,
         });
         if (response.status === 401) {
+          console.log("Redirecting to sign_in due to 401 response"); // デバッグログを追加
           window.location.replace("/users/sign_in");  // replaceを使用して無限ループを防ぐ
         } else {
           setProfileImageUrl(response.data.profile_image_url);
@@ -46,6 +47,7 @@ export default function Home() {
 
     const fetchFollows = async () => {
       try {
+        console.log("Fetch follows...");
         const response = await axios.get("/api/follows", { withCredentials: true });
         console.log("Fetched follows:", response.data); // デバッグ用ログ
         if (Array.isArray(response.data)) {
