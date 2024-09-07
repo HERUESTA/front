@@ -59,8 +59,9 @@ export default function Home() {
         console.error("フォローリストの取得に失敗しました", error);
       }
     };
-
+    console.log("Current cookies", document.cookie); // 現在のクッキーを確認
     fetchUserProfile();  // 最初にユーザープロフィールを取得
+
   }, []);
 
   const fetchVideos = async () => {
