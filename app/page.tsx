@@ -34,9 +34,10 @@ export default function Home() {
           withCredentials: true,
         });
         if (response.status === 401) {
-          window.location.href = "/users/sign_in";
+          window.location.replace("/users/sign_in");  // replaceを使用して無限ループを防ぐ
         } else {
           setProfileImageUrl(response.data.profile_image_url);
+          fetchFollows();  // プロフィール取得に成功した場合のみフォローリストを取得
         }
       } catch (error) {
         console.error("ユーザー情報の取得に失敗しました", error);
@@ -57,8 +58,7 @@ export default function Home() {
       }
     };
 
-    fetchUserProfile();
-    fetchFollows(); // フォローリストを取得
+    fetchUserProfile();  // 最初にユーザープロフィールを取得
   }, []);
 
   const fetchVideos = async () => {
