@@ -1,3 +1,4 @@
+// page.tsx
 "use client";
 
 import { useState, useEffect, ChangeEvent } from "react";
@@ -133,6 +134,17 @@ export default function Home() {
     }
   };
 
+  const unlikeVideo = async (video: Video) => {
+    try {
+      await axios.delete(`/liked_videos/${video.id}`, {
+        withCredentials: true,
+      });
+      setLikedVideos(likedVideos.filter((id) => id !== video.id)); // いいねした動画IDを削除
+    } catch (error) {
+      console.error("動画のいいね解除に失敗しました", error);
+    }
+  };
+
   return (
     <div>
       <GestHeader />
@@ -186,14 +198,15 @@ export default function Home() {
 
       <div className="flex flex-wrap">
         {videos.map((video) => (
-         <VideoCard
-         key={video.id}
-         id={video.id}
-         title={video.title}
-         parentDomain={parentDomain}
-         liked={likedVideos.includes(video.id)}
-         onLike={() => likeVideo(video)} // 修正：videoオブジェクトを渡す
-       />
+          <VideoCard
+            key={video.id}
+            id={video.id}
+            title={video.title}
+            parentDomain={parentDomain}
+            liked={likedVideos.includes(video.id)}
+            onLike={() => likeVideo(video)} // いいねの処理
+            onUnlike={() => unlikeVideo(video)} // いいね解除の処理
+          />
         ))}
         {clips.map((clip) => (
           <VideoCard
@@ -202,7 +215,8 @@ export default function Home() {
             title={clip.title}
             parentDomain={parentDomain}
             liked={likedVideos.includes(clip.id)} // クリップのいいね状態の反映
-            onLike={() => likeVideo(clip)}// クリップのいいねボタンのクリック時処理
+            onLike={() => likeVideo(clip)} // クリップのいいねボタンのクリック時処理
+            onUnlike={() => unlikeVideo(clip)} // クリップのいいね解除ボタンのクリック時処理
           />
         ))}
       </div>

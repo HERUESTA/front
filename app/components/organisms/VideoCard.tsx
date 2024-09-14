@@ -1,6 +1,7 @@
+// VideoCard.tsx
 "use client"; 
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
 type VideoCardProps = {
   id: string;
@@ -8,9 +9,10 @@ type VideoCardProps = {
   parentDomain: string;
   liked: boolean;
   onLike: () => void;
+  onUnlike: () => void;  // 新しく追加
 };
 
-const VideoCard: React.FC<VideoCardProps> = ({ id, title, parentDomain, liked, onLike }) => {
+const VideoCard: React.FC<VideoCardProps> = ({ id, title, parentDomain, liked, onLike, onUnlike }) => {
   return (
     <div className="card bg-base-100 w-96 shadow-xl m-2">
       <figure>
@@ -25,9 +27,15 @@ const VideoCard: React.FC<VideoCardProps> = ({ id, title, parentDomain, liked, o
       <div className="card-body">
         <h2 className="card-title">{title}</h2>
         <div className="card-actions justify-end">
-          <button className="btn btn-primary" onClick={onLike}>
-            {liked ? 'いいね済み' : 'いいね'}
-          </button>
+          {liked ? (
+            <button className="btn btn-secondary" onClick={onUnlike}>
+              いいね解除
+            </button>
+          ) : (
+            <button className="btn btn-primary" onClick={onLike}>
+              いいね
+            </button>
+          )}
         </div>
       </div>
     </div>
