@@ -116,7 +116,7 @@ export default function Home() {
   const likeVideo = async (video: Video) => {
     try {
       await axios.post(
-        "/api/liked_videos",
+        "/liked_videos",
         {
           liked_video: {
             video_id: video.id,
