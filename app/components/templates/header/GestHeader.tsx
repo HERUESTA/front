@@ -10,6 +10,9 @@ const GestHeader = () => {
       <Link href="/use">
         <p>使い方</p>
       </Link>
+      <Link href="/profile">
+      <p>マイプロフィール</p>
+      </Link>
     </div>
   );
 };

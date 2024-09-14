@@ -12,9 +12,9 @@ import GestHeader from "./components/templates/header/GestHeader";
 import LoginButton from "./components/LoginButton";
 
 interface Follow {
-  id: string | null;  // フォローIDがnullの場合を考慮
+  id: string | null;
   displayName: string;
-  profileImageUrl: string | null;  // プロフィール画像URLがnullの場合を考慮
+  profileImageUrl: string | null;
 }
 
 export default function Home() {
@@ -23,22 +23,22 @@ export default function Home() {
   const [game_name, setGameName] = useState<string>("");
   const [videos, setVideos] = useState<Video[]>([]);
   const [clips, setClips] = useState<Video[]>([]);
-  const [follows, setFollows] = useState<Follow[]>([]); // フォローリストの状態を追加
+  const [follows, setFollows] = useState<Follow[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null); // プロフィール画像URLの状態を追加
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
+  const [likedVideos, setLikedVideos] = useState<string[]>([]); // いいねした動画のIDリスト
 
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        const response = await axios.get("/api/user_profile", {
-          withCredentials: true,
-        });
+        const response = await axios.get("/api/user_profile", { withCredentials: true });
         if (response.status === 401) {
-          console.log("Redirecting to sign_in due to 401 response"); // デバッグログを追加
-          window.location.replace("/users/sign_in");  // replaceを使用して無限ループを防ぐ
+          console.log("Redirecting to sign_in due to 401 response");
+          window.location.replace("/users/sign_in");
         } else {
           setProfileImageUrl(response.data.profile_image_url);
-          fetchFollows();  // プロフィール取得に成功した場合のみフォローリストを取得
+          fetchFollows();
+          fetchLikedVideos(); // いいねした動画の取得
         }
       } catch (error) {
         console.error("ユーザー情報の取得に失敗しました", error);
@@ -49,7 +49,6 @@ export default function Home() {
       try {
         console.log("Fetch follows...");
         const response = await axios.get("/api/follows", { withCredentials: true });
-        console.log("Fetched follows:", response.data); // デバッグ用ログ
         if (Array.isArray(response.data)) {
           setFollows(response.data);
         } else {
@@ -59,9 +58,17 @@ export default function Home() {
         console.error("フォローリストの取得に失敗しました", error);
       }
     };
-    console.log("Current cookies", document.cookie); // 現在のクッキーを確認
-    fetchUserProfile();  // 最初にユーザープロフィールを取得
 
+    const fetchLikedVideos = async () => {
+      try {
+        const response = await axios.get("/liked_videos", { withCredentials: true });
+        setLikedVideos(response.data.map((video: any) => video.video_id)); // いいねした動画のIDのみを保存
+      } catch (error) {
+        console.error("いいねした動画の取得に失敗しました", error);
+      }
+    };
+
+    fetchUserProfile();
   }, []);
 
   const fetchVideos = async () => {
@@ -71,16 +78,13 @@ export default function Home() {
       setVideos(videoData);
     } catch (error) {
       setErrorMessage("ビデオが見つかりませんでした");
-      console.error("ビデオが見つかりませんでした", error);
-      setVideos([]); // エラー時には空の配列を設定
+      setVideos([]);
     }
   };
 
   const fetchClips = async () => {
     try {
-      const response = await axios.get(`/twitch/clips`, {
-        params: { game_name: game_name },
-      });
+      const response = await axios.get(`/twitch/clips`, { params: { game_name: game_name } });
       const clipData = response.data.map((clip: any) => ({
         id: clip.id,
         url: `https://clips.twitch.tv/${clip.id}`,
@@ -103,9 +107,29 @@ export default function Home() {
   const handleLogout = async () => {
     try {
       await axios.delete("/logout", { withCredentials: true });
-      window.location.href = '/'; // ログアウト後にリダイレクト
+      window.location.href = "/";
     } catch (error) {
       console.error("ログアウトに失敗しました", error);
+    }
+  };
+
+  const likeVideo = async (video: Video) => {
+    try {
+      await axios.post(
+        "/api/liked_videos",
+        {
+          liked_video: {
+            video_id: video.id,
+            title: video.title,
+            thumbnail_url: video.thumbnail_url,
+            video_url: video.url,
+          },
+        },
+        { withCredentials: true }
+      );
+      setLikedVideos([...likedVideos, video.id]); // いいねした動画IDを追加
+    } catch (error) {
+      console.error("動画のいいねに失敗しました", error);
     }
   };
 
@@ -139,8 +163,7 @@ export default function Home() {
         placeholder="配信者IDを入力してください"
       />
       <SearchButton onClick={fetchVideos} />
-      
-      {/* フォローリストの表示 */}
+
       <div>
         <h2>フォローリスト</h2>
         {follows.length > 0 ? (
@@ -148,7 +171,7 @@ export default function Home() {
             {follows.map((follow, index) => (
               <li key={follow.id ?? index}>
                 <img
-                  src={follow.profileImageUrl ?? "/path/to/default-image.jpg"} 
+                  src={follow.profileImageUrl ?? "/path/to/default-image.jpg"}
                   alt={follow.displayName}
                   className="rounded-full w-8 h-8"
                 />
@@ -163,12 +186,14 @@ export default function Home() {
 
       <div className="flex flex-wrap">
         {videos.map((video) => (
-          <VideoCard
-            key={video.id}
-            id={video.id}
-            title={video.title}
-            parentDomain={parentDomain}
-          />
+         <VideoCard
+         key={video.id}
+         id={video.id}
+         title={video.title}
+         parentDomain={parentDomain}
+         liked={likedVideos.includes(video.id)}
+         onLike={() => likeVideo(video)} // 修正：videoオブジェクトを渡す
+       />
         ))}
         {clips.map((clip) => (
           <VideoCard
@@ -176,6 +201,8 @@ export default function Home() {
             id={clip.id}
             title={clip.title}
             parentDomain={parentDomain}
+            liked={likedVideos.includes(clip.id)} // クリップのいいね状態の反映
+            onLike={() => likeVideo(clip)}// クリップのいいねボタンのクリック時処理
           />
         ))}
       </div>
