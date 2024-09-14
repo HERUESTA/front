@@ -1,11 +1,4 @@
-import { Video, TwitchResponse } from '../../type/api/video';
-
-type TwitchVideoData = {
-  id: string;
-  title: string;
-  thumbnail_url: string;
-  // 必要に応じて他のプロパティを追加
-};
+import { Video, TwitchResponse, TwitchVideoData } from '../../type/api/video';
 
 export const processVideoData = (response: TwitchResponse): Video[] => {
   return response.data.map((video: TwitchVideoData) => ({
