@@ -7,6 +7,6 @@ export const processVideoData = (response: TwitchResponse): Video[] => {
     id: video.id,
     url: `https://www.twitch.tv/videos/${video.id}`,
     title: video.title,
-    thumbnail_url: video.thumbnail_url.replace('%{width}x%{height}', '320x180'),
+    thumbnail_url: video.thumbnail_url, // 追加
   }));
 };
