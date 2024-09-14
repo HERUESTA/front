@@ -1,10 +1,10 @@
-"use client"; // これを追加
+"use client";
 
 import React, { useEffect, useState } from 'react';
 import { LikedVideo, Video } from '../type/api/video';
-import axios from "../../lib/axios";
+import axios from '../../lib/axios'; // パスを調整
 import VideoCard from '../components/organisms/VideoCard';
-
+import Link from 'next/link';
 
 const Profile: React.FC = () => {
   const [likedVideos, setLikedVideos] = useState<LikedVideo[]>([]);
@@ -25,6 +25,9 @@ const Profile: React.FC = () => {
 
   return (
     <div>
+      <Link href="/"> {/* ここを修正 */}
+        <p>TOP画面</p>
+      </Link>
       <h1>マイプロフィール</h1>
       <h2>いいねした動画</h2>
       <div className="flex flex-wrap">
@@ -34,7 +37,7 @@ const Profile: React.FC = () => {
             id={video.video_id}
             title={video.title}
             parentDomain={parentDomain}
-            liked={true} // すでにいいね済みなので true
+            liked={true}
             onLike={() => {}} // プロフィールページではいいね機能は不要かもしれません
           />
         ))}
