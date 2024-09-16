@@ -1,16 +1,16 @@
-// page.tsx
 "use client";
 
 import { useState, useEffect, ChangeEvent } from "react";
-import axios from "../lib/axios";
-import { Video } from "./type/api/video";
-import Text from "./components/molecules/text/Text";
-import TextInput from "./components/molecules/textInput/TextInput";
-import { processVideoData } from "./components/utils/VideoUtils";
-import SearchButton from "./components/molecules/button/SearchButton";
-import VideoCard from "./components/organisms/VideoCard";
-import GestHeader from "./components/templates/header/GestHeader";
-import LoginButton from "./components/LoginButton";
+import axios from "../../lib/axios";
+import { Clip } from "../type/api/clip";
+import Text from "../components/ui/Text";
+import TextInput from "../components/ui/TextInput";
+import SearchButton from "../components/ui/SearchButton";
+import ClipCard from "../components/clips/ClipCard";
+import GestHeader from "../components/layout/GestHeader";
+import LoginButton from "../components/ui/LoginButton";
+import { useFetchStreamersClip } from "../hook/useFetchStreamersClip";
+import Loading from "../components/ui/Loading";
 
 interface Follow {
   id: string | null;
@@ -22,24 +22,25 @@ export default function Home() {
   const parentDomain = process.env.NEXT_PUBLIC_PARENT_DOMAIN || "localhost";
   const [streamerId, setStreamerId] = useState<string>("");
   const [game_name, setGameName] = useState<string>("");
-  const [videos, setVideos] = useState<Video[]>([]);
-  const [clips, setClips] = useState<Video[]>([]);
+  const [videos, setVideos] = useState<Clip[]>([]);
+  const [clips, setClips] = useState<Clip[]>([]);
   const [follows, setFollows] = useState<Follow[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
-  const [likedVideos, setLikedVideos] = useState<string[]>([]); // いいねした動画のIDリスト
+  const { streamerClip ,fetchStreamersClip, isLoading } = useFetchStreamersClip();
 
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        const response = await axios.get("/api/user_profile", { withCredentials: true });
+        const response = await axios.get("/api/user_profile", {
+          withCredentials: true,
+        });
         if (response.status === 401) {
           console.log("Redirecting to sign_in due to 401 response");
           window.location.replace("/users/sign_in");
         } else {
           setProfileImageUrl(response.data.profile_image_url);
           fetchFollows();
-          fetchLikedVideos(); // いいねした動画の取得
         }
       } catch (error) {
         console.error("ユーザー情報の取得に失敗しました", error);
@@ -49,7 +50,9 @@ export default function Home() {
     const fetchFollows = async () => {
       try {
         console.log("Fetch follows...");
-        const response = await axios.get("/api/follows", { withCredentials: true });
+        const response = await axios.get("/api/follows", {
+          withCredentials: true,
+        });
         if (Array.isArray(response.data)) {
           setFollows(response.data);
         } else {
@@ -60,32 +63,14 @@ export default function Home() {
       }
     };
 
-    const fetchLikedVideos = async () => {
-      try {
-        const response = await axios.get("/liked_videos", { withCredentials: true });
-        setLikedVideos(response.data.map((video: any) => video.video_id)); // いいねした動画のIDのみを保存
-      } catch (error) {
-        console.error("いいねした動画の取得に失敗しました", error);
-      }
-    };
-
     fetchUserProfile();
   }, []);
 
-  const fetchVideos = async () => {
-    try {
-      const response = await axios.get(`/twitch/${streamerId}`);
-      const videoData = processVideoData(response.data);
-      setVideos(videoData);
-    } catch (error) {
-      setErrorMessage("ビデオが見つかりませんでした");
-      setVideos([]);
-    }
-  };
-
   const fetchClips = async () => {
     try {
-      const response = await axios.get(`/twitch/clips`, { params: { game_name: game_name } });
+      const response = await axios.get(`/twitch/clips`, {
+        params: { game_name: game_name },
+      });
       const clipData = response.data.map((clip: any) => ({
         id: clip.id,
         url: `https://clips.twitch.tv/${clip.id}`,
@@ -97,12 +82,8 @@ export default function Home() {
     }
   };
 
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleInputClipChange = (e: ChangeEvent<HTMLInputElement>) => {
     setStreamerId(e.target.value);
-  };
-
-  const handleInputGameChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setGameName(e.target.value);
   };
 
   const handleLogout = async () => {
@@ -114,34 +95,12 @@ export default function Home() {
     }
   };
 
-  const likeVideo = async (video: Video) => {
-    try {
-      await axios.post(
-        "/liked_videos",
-        {
-          liked_video: {
-            video_id: video.id,
-            title: video.title,
-            thumbnail_url: video.thumbnail_url,
-            video_url: video.url,
-          },
-        },
-        { withCredentials: true }
-      );
-      setLikedVideos([...likedVideos, video.id]); // いいねした動画IDを追加
-    } catch (error) {
-      console.error("動画のいいねに失敗しました", error);
-    }
-  };
-
-  const unlikeVideo = async (video: Video) => {
-    try {
-      await axios.delete(`/liked_videos/${video.id}`, {
-        withCredentials: true,
-      });
-      setLikedVideos(likedVideos.filter((id) => id !== video.id)); // いいねした動画IDを削除
-    } catch (error) {
-      console.error("動画のいいね解除に失敗しました", error);
+  const handleFollowClick = (id: string | null) => {
+    if (id) {
+      setStreamerId(id); 
+      fetchStreamersClip(id); 
+    } else {
+      console.warn("Clicked follow with null ID."); 
     }
   };
 
@@ -165,23 +124,27 @@ export default function Home() {
       <Text />
       <TextInput
         value={game_name}
-        onChange={handleInputGameChange}
+        onChange={handleInputClipChange}
         placeholder="ゲーム名を入力してください"
       />
+
       <SearchButton onClick={fetchClips} />
       <TextInput
         value={streamerId}
-        onChange={handleInputChange}
+        onChange={handleInputClipChange}
         placeholder="配信者IDを入力してください"
       />
-      <SearchButton onClick={fetchVideos} />
+      <SearchButton onClick={() => fetchStreamersClip(streamerId)} />
 
       <div>
         <h2>フォローリスト</h2>
         {follows.length > 0 ? (
           <ul>
-            {follows.map((follow, index) => (
-              <li key={follow.id ?? index}>
+            {follows.map((follow) => (
+              <li
+                key={follow.id ?? undefined}
+                onClick={() => handleFollowClick(follow.id)}
+              >
                 <img
                   src={follow.profileImageUrl ?? "/path/to/default-image.jpg"}
                   alt={follow.displayName}
@@ -196,30 +159,29 @@ export default function Home() {
         )}
       </div>
 
+       {/* ローディング中であればローディングコンポーネントを表示 */}
+      {isLoading ? (
+        <Loading />
+      ) : (
       <div className="flex flex-wrap">
         {videos.map((video) => (
-          <VideoCard
+          <ClipCard
             key={video.id}
             id={video.id}
             title={video.title}
             parentDomain={parentDomain}
-            liked={likedVideos.includes(video.id)}
-            onLike={() => likeVideo(video)} // いいねの処理
-            onUnlike={() => unlikeVideo(video)} // いいね解除の処理
           />
         ))}
-        {clips.map((clip) => (
-          <VideoCard
+        {streamerClip.map((clip) => (
+          <ClipCard
             key={clip.id}
             id={clip.id}
             title={clip.title}
             parentDomain={parentDomain}
-            liked={likedVideos.includes(clip.id)} // クリップのいいね状態の反映
-            onLike={() => likeVideo(clip)} // クリップのいいねボタンのクリック時処理
-            onUnlike={() => unlikeVideo(clip)} // クリップのいいね解除ボタンのクリック時処理
           />
         ))}
       </div>
+      )}
     </div>
   );
 }
